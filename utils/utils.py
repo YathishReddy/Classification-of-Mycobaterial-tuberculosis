@@ -15,6 +15,9 @@ DATA_SET_TRAIN_NEGATIVE_ = DATA_SET_TRAIN + "negative/"
 PIXEL_CLASSIFIER_TEST_INPUT = DATA_SET_DIR + "test/"
 
 TEST_FILE_1 = "test1.png"
+LARGE_TEST_FILE = "test2.png"
+
+INF_COMPACTNESS_VALUE = 10.0
 
 FEATURES_LOCATION = "/home/mohit/Classification-of-Mycobaterial-tuberculosis/features.csv"
 FEATURES_ORDER = ["compactness", "eccentricity", "nu11", "nu12", "nu21", "nu02", "nu20", "nu03", "nu30"]
@@ -40,18 +43,16 @@ def get_largest_contour(image):
     ret, thresh = cv2.threshold(image_gray, 150, 255, 0)
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     max_area = 0
-    max_index = -1
+    max_index = 0
     for contour_index in range(len(contours)):
         contour_area = cv2.contourArea(contours[contour_index])
         if contour_area > max_area and len(contours) >= 5:
             max_area = contour_area
             max_index = contour_index
-    if max_index == -1 and len(contours) > 0:
-        """Todo: hack!!"""
-        max_contour = contours[0]
+    if len(contours) > 0:
+        return contours[max_index]
     else:
-        max_contour = contours[max_index]
-    return max_contour
+        return None
 
 
 def get_contour_area(contour):
@@ -76,3 +77,19 @@ def get_contour_moments(contour):
         if 'nu' in key:
             norm_moments[key] = moments[key]
     return norm_moments
+
+
+def get_features_labels_from_csv():
+    features = []
+    labels = []
+    with open(FEATURES_LOCATION, 'rb') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            labels.append(row[-1])
+            row = row[:-1]
+            features_tuple = []
+            for feature in row:
+                features_tuple.append(float(feature))
+            features.append(features_tuple)
+        f.close()
+    return features, labels
